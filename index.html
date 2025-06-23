@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema AOP - Dashboard en Tiempo Real</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="styles.css" type="text/css">
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Sistema AOP Dashboard</h1>
+        <p>Monitoreo en Tiempo Real de Aspect-Oriented Programming</p>
+    </div>
+
+    <div class="container">
+        <!-- Panel de Control -->
+        <div class="panel controls">
+            <h2>🎮 Panel de Control</h2>
+            <button class="btn" onclick="executeProcessData()">📊 Procesar Datos</button>
+            <button class="btn" onclick="executeCalculateAverage()">📈 Calcular Promedio</button>
+            <button class="btn danger" onclick="executeErrorDemo()">⚠️ Demo Error</button>
+            <button class="btn" onclick="executeSlowOperation()">⏱️ Operación Lenta</button>
+            <button class="btn success" onclick="clearCache()">🧹 Limpiar Cache</button>
+            <button class="btn" onclick="clearLogs()">📝 Limpiar Logs</button>
+        </div>
+
+        <!-- Métricas en Tiempo Real -->
+        <div class="panel">
+            <h2>📊 Métricas en Tiempo Real</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalExecutions">0</div>
+                    <div class="metric-label">Total Ejecuciones</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="avgExecutionTime">0ms</div>
+                    <div class="metric-label">Tiempo Promedio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="cacheHits">0</div>
+                    <div class="metric-label">Cache Hits</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="errorCount">0</div>
+                    <div class="metric-label">Errores</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Estado del Cache -->
+        <div class="panel">
+            <h2>💾 Estado del Cache</h2>
+            <div class="cache-status">
+                <span>Estado del Cache:</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="cache-indicator" id="cacheIndicator"></div>
+                    <span id="cacheStatus">Activo</span>
+                </div>
+            </div>
+            
+            <div id="cacheEntries">
+                <p style="text-align: center; color: #666; margin: 20px 0;">No hay elementos en cache</p>
+            </div>
+        </div>
+
+        <!-- Estado de Aspectos -->
+        <div class="panel">
+            <h2>🔧 Estado de Aspectos</h2>
+            <div class="aspect-status">
+                <div class="aspect-card active">
+                    <strong>Logging</strong><br>
+                    <small>✅ Activo</small>
+                </div>
+                <div class="aspect-card active">
+                    <strong>Performance</strong><br>
+                    <small>✅ Activo</small>
+                </div>
+                <div class="aspect-card active">
+                    <strong>Cache</strong><br>
+                    <small>✅ Activo</small>
+                </div>
+                <div class="aspect-card active">
+                    <strong>Retry</strong><br>
+                    <small>✅ Activo</small>
+                </div>
+                <div class="aspect-card active">
+                    <strong>Validation</strong><br>
+                    <small>✅ Activo</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs en Tiempo Real -->
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h2>📋 Logs en Tiempo Real</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry log-info">
+                    <strong>[INFO]</strong> Sistema AOP iniciado correctamente - Todos los aspectos activos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
