@@ -97,17 +97,46 @@ function executeProcessData() {
     const isCached = appState.cache.has(cacheKey);
     
     if (!isCached) {
-        appState.cache.set(cacheKey, { result: '[3, 6, 9, 12]', timestamp: Date.now() });
+        // Cache MISS - ejecutar y cachear
+        addLog('Cache miss - Ejecutando función y guardando resultado', 'info');
+        appState.cache.set(cacheKey, { 
+            result: '[3, 6, 9, 12]', 
+            timestamp: Date.now(),
+            method: 'process_data'
+        });
         simulateAOPExecution('BusinessService.process_data', 120, true, false);
+        updateCacheDisplay();
     } else {
+        // Cache HIT - usar resultado cacheado
+        addLog('Cache hit - Usando resultado cacheado', 'success');
         simulateAOPExecution('BusinessService.process_data', 15, true, true);
     }
-    
-    updateCacheDisplay();
 }
 
 function executeCalculateAverage() {
-    simulateAOPExecution('BusinessService.calculate_average', 45, true, false);
+    const inputs = [
+        { key: 'calc_avg_[10,20,30]', params: '[10,20,30]', result: '20.0' },
+        { key: 'calc_avg_[5,15,25]', params: '[5,15,25]', result: '15.0' },
+        { key: 'calc_avg_[100,200]', params: '[100,200]', result: '150.0' }
+    ];
+    
+    const randomInput = inputs[Math.floor(Math.random() * inputs.length)];
+    const isCached = appState.cache.has(randomInput.key);
+    
+    if (!isCached) {
+        // Cachear resultado si no existe
+        appState.cache.set(randomInput.key, {
+            result: randomInput.result,
+            timestamp: Date.now(),
+            method: 'calculate_average'
+        });
+        addLog(`Cache miss - Calculando promedio para ${randomInput.params}`, 'info');
+        simulateAOPExecution('BusinessService.calculate_average', 45, true, false);
+        updateCacheDisplay();
+    } else {
+        addLog(`Cache hit - Promedio ya calculado para ${randomInput.params}`, 'success');
+        simulateAOPExecution('BusinessService.calculate_average', 8, true, true);
+    }
 }
 
 function executeErrorDemo() {
@@ -129,7 +158,28 @@ function executeErrorDemo() {
 }
 
 function executeSlowOperation() {
-    simulateAOPExecution('BusinessService.slow_operation', 180, true, false);
+    const operations = [
+        { key: 'slow_op_0.3s', duration: 180, param: '0.3s' },
+        { key: 'slow_op_0.5s', duration: 250, param: '0.5s' },
+        { key: 'slow_op_1.0s', duration: 400, param: '1.0s' }
+    ];
+    
+    const randomOp = operations[Math.floor(Math.random() * operations.length)];
+    const isCached = appState.cache.has(randomOp.key);
+    
+    if (!isCached) {
+        appState.cache.set(randomOp.key, {
+            result: `Operación completada en ${randomOp.param}`,
+            timestamp: Date.now(),
+            method: 'slow_operation'
+        });
+        addLog(`Cache miss - Ejecutando operación lenta (${randomOp.param})`, 'info');
+        simulateAOPExecution('BusinessService.slow_operation', randomOp.duration, true, false);
+        updateCacheDisplay();
+    } else {
+        addLog(`Cache hit - Operación lenta ya ejecutada (${randomOp.param})`, 'success');
+        simulateAOPExecution('BusinessService.slow_operation', 12, true, true);
+    }
 }
 
 function clearCache() {
@@ -187,24 +237,69 @@ function updatePerformanceChart(executionTime) {
 
 function updateCacheDisplay() {
     const cacheContainer = document.getElementById('cacheEntries');
+    const cacheIndicator = document.getElementById('cacheIndicator');
+    const cacheStatus = document.getElementById('cacheStatus');
     
     if (appState.cache.size === 0) {
         cacheContainer.innerHTML = '<p style="text-align: center; color: #666; margin: 20px 0;">No hay elementos en cache</p>';
+        cacheIndicator.style.background = '#ccc';
+        cacheStatus.textContent = 'Vacío';
     } else {
         let html = '<div style="font-size: 12px;">';
+        let index = 1;
         appState.cache.forEach((value, key) => {
             const age = Math.round((Date.now() - value.timestamp) / 1000);
+            const shortKey = key.length > 30 ? key.substring(0, 30) + '...' : key;
+            
+            // Diferentes colores según la edad del cache
+            let borderColor = '#4caf50'; // Verde para nuevo
+            let bgColor = '#e8f5e8';
+            
+            if (age > 30) {
+                borderColor = '#ff9800'; // Naranja para medio
+                bgColor = '#fff3e0';
+            }
+            if (age > 60) {
+                borderColor = '#f44336'; // Rojo para viejo
+                bgColor = '#ffebee';
+            }
+            
             html += `
-                <div style="background: #e8f5e8; padding: 8px; margin: 5px 0; border-radius: 4px; border-left: 3px solid #4caf50;">
-                    <strong>Key:</strong> ${key.substring(0, 40)}...<br>
-                    <strong>Edad:</strong> ${age}s
+                <div style="background: ${bgColor}; padding: 8px; margin: 5px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">
+                    <strong>#${index}</strong> ${value.method}<br>
+                    <small style="color: #666;">Key: ${shortKey}</small><br>
+                    <small style="color: #666;">Edad: ${age}s | TTL: ${Math.max(0, 60-age)}s restantes</small>
                 </div>
             `;
+            index++;
         });
         html += '</div>';
         cacheContainer.innerHTML = html;
+        
+        // Indicador de estado
+        cacheIndicator.style.background = '#4caf50';
+        cacheStatus.textContent = `Activo (${appState.cache.size} elementos)`;
     }
 }
+
+// Simulación de TTL del cache - limpiar elementos viejos cada 10 segundos
+setInterval(() => {
+    const now = Date.now();
+    let removedCount = 0;
+    
+    appState.cache.forEach((value, key) => {
+        const age = (now - value.timestamp) / 1000;
+        if (age > 60) { // TTL de 60 segundos
+            appState.cache.delete(key);
+            removedCount++;
+        }
+    });
+    
+    if (removedCount > 0) {
+        addLog(`TTL expirado - ${removedCount} elemento(s) removido(s) del cache`, 'warning');
+        updateCacheDisplay();
+    }
+}, 10000);
 
 // Simulación automática cada 30 segundos
 setInterval(() => {
